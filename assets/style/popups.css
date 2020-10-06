@@ -1,0 +1,23 @@
+
+
+#popuptext {
+    display: inline-block;
+    font-weight: 500;
+    color: white;
+    background-color: black;
+    font-size: 42px;
+    margin: 0;
+    padding: 16px 32px 16px 32px;
+}
+
+#popupbox {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    visibility: hidden;
+    max-width: calc(100% - 32px);
+    max-height: calc(100% - 32px);
+}

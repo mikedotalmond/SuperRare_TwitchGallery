@@ -1,0 +1,27 @@
+.gallery {
+
+}
+.gallery > .images > .image {
+    width: 100%;
+    position: absolute;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    scale: 100%;
+    image-rendering: crisp-edges;
+}
+
+.gallery > .images > .image.a {
+    opacity: 1;
+    background-image: url(https://ipfs.pixura.io/ipfs/QmWZYW6TrubECSfFEYB7Tn9S6FpZCCjyQ29vkwwm6p8hMj/worms2.png);
+}
+.gallery > .images > .image.b {
+    opacity: 0;
+    background-image: url(https://ipfs.pixura.io/ipfs/QmRQdWjoSgAuMLsqApveoSYdKc8hMCd8GH47fA2LX1fgg5);
+}
+
+.gallery img.preload {
+    visibility: hidden;
+    position: absolute;
+    z-index: -1;
+}

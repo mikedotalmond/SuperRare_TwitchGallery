@@ -1,0 +1,7 @@
+https://superrare.co/sr-json/docs/#/default/get_sr_json_v0_nfts_assets
+
+https://superrare.co/sr-json/v0/nfts/assets?creator_addresses=0x44821f92d83c5b6055044ebf3de64574c894854a
+
+https://superrare.co/sr-json/v0/nfts/assets?limit=100&offset=0&creator_addresses=0x44821f92d83c5b6055044ebf3de64574c894854a
+
+https://superrare.co/sr-json/v0/nfts/assets?limit=100&offset=100&creator_addresses=0x44821f92d83c5b6055044ebf3de64574c894854a
