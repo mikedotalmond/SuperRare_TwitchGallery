@@ -71,10 +71,33 @@ srGallery.config = {
 
             clearTimeout(updateTimeout);
 
+            // assetData.next = await srAPI.getUserAssets(config.userAddress, assetOrder[assetIndex.next], 1);
             assetData.current = await srAPI.getUserAssets(config.userAddress, assetOrder[assetIndex.current], 1);
-            assetData.next = await srAPI.getUserAssets(config.userAddress, assetOrder[assetIndex.next], 1);
 
-            const currentImageUrl = assetData.current[0].image;
+            const currentAsset = assetData.current[0];
+            /** artwork-v2 objects have media data...
+             * media: {…}
+​​​​                dimensions: "8025x5076"      ​​​​
+                mimeType: "image/jpeg"                ​​​​
+                size: "34972690"                ​​​​
+                uri: "https://ipfs.pixura.io/ipf...
+             */
+            const currentImageUrl = currentAsset.image;
+
+            const metadata = await srAPI.getJSONResponse(currentAsset.metadataUri);
+            /*	" name  Ordinary Oscillations 5 - Heartbeat"
+                createdBy	"Mike Almond"
+                yearCreated	"2019"
+                description	"A looping GIF sequence."
+                image	"https://ipfs.pixura.io/ip...."
+                tags	
+                0	"gif"
+                1	"loop"
+                2	"motion"
+                3	"oscillate"
+                4	"rhythmic"
+                5	"pulse"
+                */
 
             gsap.set("#srgallery_image_a", { autoAlpha: 0 });
 
@@ -84,9 +107,33 @@ srGallery.config = {
                 preloadImg.src = "";
 
                 updateTimeout = setTimeout(() => next(), config.duration * 1000);
+
+                overlays.title.show(metadata.name, 0);
+                overlays.subtitle.show(`${metadata.createdBy}, ${metadata.yearCreated}`, 0, null);
+                overlays.desc.show(currentAsset.description, 0, null);
+                overlays.info.show("Use !info for links to the artwork.", 0, null);
+                // overlays.description.show(currentAsset.description, null);
+                // overlays.help.show("!gallery", null);
+                
+                /*  category: "artwork-v2"
+                    contractAddress: "0xb932a70a57673d89f4acffbe830e8ed7f75fb9e0"​​​
+                    creator: Object { address: "0x44821f92d83c5b6055044ebf3de64574c894854a", user: {…} }
+                    description: "A looping GIF sequence."
+                    id: 4688
+                    image: "https://ipfs.pixura.io/ipfs/QmejB4FR2F7TVSYq41U2tGxqa5UZwjxC8zoVKBpAz85Zeu"
+                    likeCount: 0
+                    media: null
+                    metadataUri: "https://ipfs.pixura.io/ipfs/QmYtCcba6gPFUUK8tKn88RiL6ojmX86T42Km8cXjxvSFsT"
+                    name: " Ordinary Oscillations 5 - Heartbeat"
+                    owner: Object { address: "0x44821f92d83c5b6055044ebf3de64574c894854a", user: {…} }
+                    tags: Array(6) [ "gif", "loop", "motion", … ]
+                    url: "https://SuperRare.co/artwork-v2/-ordinary-oscillations-5---heartbeat-4688"
+                    viewCount: 0
+                */
             };
 
             preloadImg.src = currentImageUrl;
+            
 
             log("assetData", assetData);
         },

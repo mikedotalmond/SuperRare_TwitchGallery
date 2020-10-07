@@ -25,8 +25,7 @@ const srAPI = {};
          * }
          */
         getUserData = async (userId) => {
-            const response = await fetch(getUserURI(userId));
-            const data = await response.json();
+            const data = await getJSONResponse(getUserURI(userId));
             if (data != null && data instanceof Array) return data[0];
             return data;
         },
@@ -35,11 +34,16 @@ const srAPI = {};
          * Fetch asset data for a user
          */
         getUserAssets = async (userId, offset, limit) => {
-            const response = await fetch(getUserAssetsURI(userId, offset, limit));
+            return getJSONResponse(getUserAssetsURI(userId, offset, limit));
+        },
+
+        getJSONResponse = async (uri) => {
+            const response = await fetch(uri);
             const data = await response.json();
             return data;
         };
 
+    srAPI.getJSONResponse = getJSONResponse;
     srAPI.getUserData = getUserData;
     srAPI.getUserAssets = getUserAssets;
 

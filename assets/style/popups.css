@@ -1,16 +1,5 @@
 
-
-#popuptext {
-    display: inline-block;
-    font-weight: 500;
-    color: white;
-    background-color: black;
-    font-size: 42px;
-    margin: 0;
-    padding: 16px 32px 16px 32px;
-}
-
-#popupbox {
+#titleBox {
     position: absolute;
     top: 16px;
     left: 16px;
@@ -20,4 +9,65 @@
     visibility: hidden;
     max-width: calc(100% - 32px);
     max-height: calc(100% - 32px);
+}
+#titleText {
+    display: inline-block;
+    font-weight: 500;
+    color: white;
+    background-color: black;
+    font-size: 46px;
+    margin: 0;
+    padding: 16px 32px 16px 32px;
+}
+#subtitleText {
+    display: inline-block;
+    font-weight: 800;
+    color: black;
+    background-color: whitesmoke;
+    font-size: 24px;
+    margin: 0;
+    padding: 16px 32px 16px 32px;
+}
+
+
+
+#descBox {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    width: 100%;
+    height: auto;
+    overflow: hidden;
+    visibility: hidden;
+    max-width: calc(100% - 32px);
+    max-height: calc(100% - 32px);
+}
+#descText {
+    background-color: #0a0a0afa;
+    color: #f6f6f6;
+    font-size: 28px;
+    font-weight: 400;
+    padding: 32px;
+    margin-bottom: 0px;
+}
+
+
+
+#infoBox {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    visibility: hidden;
+    max-width: calc(40% - 32px);
+    max-height: calc(100% - 32px);
+}
+#infoText {
+	background-color: #fffffffa;
+	color: #100;
+	font-size: 26px;
+    font-weight: 800;
+    padding: 2px 6px 2px 6px;
 }

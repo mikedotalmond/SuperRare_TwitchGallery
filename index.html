@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8" />
@@ -16,8 +17,10 @@
     <script src="./src/sr-api.js"></script>
     <script src="./src/sr-gallery.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+        rel="stylesheet">
+
     <link rel="stylesheet" type="text/css" href="assets/style/base.css">
     <link rel="stylesheet" type="text/css" href="assets/style/popups.css">
     <link rel="stylesheet" type="text/css" href="assets/style/sr-gallery.css">
@@ -29,14 +32,17 @@
         <img id="image-preload" class="preload" src="" />
         <div class="images">
             <div id="srgallery_image_a" class="image"></div>
-            <div id="srgallery_image_b" class="image"></div>
         </div>
     </div>
 
-    <div id="popupbox">
-        <h1 id="popuptext"></h1>
+    <div id="titleBox">
+        <h1 id="titleText"></h1>
+        <div id="subtitleBox"><h1 id="subtitleText"></h1></div>
     </div>
+    <div id="descBox"><h1 id="descText"></h1></div>
+    <div id="infoBox"><h1 id="infoText"></h1></div>
 
     <script src="./src/main.js"></script>
 </body>
+
 </html>

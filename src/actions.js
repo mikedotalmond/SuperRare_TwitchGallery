@@ -13,7 +13,7 @@
         handle: (context, textContent) => {
             console.log(context);
             console.log(textContent);
-            overlays.popup.show(textContent);
+            overlays.title.show(textContent);
         }
     };
 
@@ -27,7 +27,7 @@
             return context.mod || (context["badges-raw"] != null && context["badges-raw"].startsWith("broadcaster"))
         },
         handle: (context, textContent) => {
-            overlays.popup.delete();
+            overlays.delete();
         }
     };
 
