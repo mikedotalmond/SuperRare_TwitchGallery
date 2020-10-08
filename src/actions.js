@@ -125,9 +125,13 @@
                 security: privateSecurityCheck,
                 handle: (__, _) => srGallery.hide(),
             };
-            actions['!gallery_reset'] = {
+            actions['!gallery_next'] = {
                 security: privateSecurityCheck,
-                handle: (_, __) => srGallery.resetAssetOrder(),
+                handle: (context, txt) => srGallery.next(),
+            };
+            actions['!gallery_prev'] = {
+                security: privateSecurityCheck,
+                handle: (_, __) => srGallery.prev(),
             };
         },
 
