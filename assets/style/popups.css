@@ -22,7 +22,7 @@
 #subtitleText {
     display: inline-block;
     font-weight: 800;
-    color: black;
+    color: #171414;
     background-color: whitesmoke;
     font-size: 24px;
     margin: 0;
@@ -35,7 +35,6 @@
     position: absolute;
     bottom: 16px;
     left: 16px;
-    width: 100%;
     height: auto;
     overflow: hidden;
     visibility: hidden;
@@ -43,11 +42,11 @@
     max-height: calc(100% - 32px);
 }
 #descText {
-    background-color: #0a0a0afa;
+    background-color: #171414;
     color: #f6f6f6;
     font-size: 28px;
     font-weight: 400;
-    padding: 32px;
+    padding: 16px;
     margin-bottom: 0px;
 }
 

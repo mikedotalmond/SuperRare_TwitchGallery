@@ -1,15 +1,12 @@
 /**
- * Globals... :\
+ * Entry point for creating a new tmi.client to listen for Twitch channel and chat events.
  */
+
+const chatbot = { connected: false, client: null };
 
 ((config, log) => {
 
     let client = null;
-
-    config.strings = {
-        "bot_mod_all_caps": ["No shouting, please.", "There's no need to shout.", "Calm down."],
-        "bot_mod_other": ["Do better."],
-    };
 
     const
         actions = config.actions,
@@ -19,19 +16,22 @@
         sayFromChannelPrefixed = (prefix, message) => sayFromChannel(`${prefix}${message}`),
         sayFromChannelBot = (message) => sayFromChannelPrefixed(config.botMessagePrefix, message),
 
-        // match all characters in [a-Z0-9_]
-        word_regex = new RegExp('\\w', 'g'),
-
-        randomStringFromSet = key => {
-            const reasons = strings.hasOwnProperty(key) ? strings[key] : null;
-            if (reasons !== null && reasons instanceof Array && reasons.length > 0) {
-                return reasons[(reasons.length * Math.random()) | 0];
-            }
-            return `(${key})`;
+        /**
+         * Delete a chat message by id, and respond via the bot in chat if responseKey is set/exists in the strings data.
+         */
+        deleteMessageAndRespond = (context, responseKey) => {
+            client
+                .deletemessage(channel, context.id)
+                .finally(() => {
+                    if (responseKey != null) {
+                        let response = utils.randomStringFromSet(responseKey, strings);
+                        if (response != null && response != responseKey) sayFromChannelBot(`${context.username} ${response}`);
+                    }
+                });
         },
 
 
-        // TODO: implament a more useful message sanitizer/monitor and implement response messaging. 
+        // TODO: implement a more useful message sanitizer/monitor and implement response messaging. 
         // for now it only filters ALL CAPS messages
         sanitiseMessage = message => {
             if (message == null || message.length == 0) return { ok: false, reason: null, message: null };
@@ -47,19 +47,6 @@
             // TODO: a percentage ALLCAPS check, threshold, etc
 
             return response;
-        },
-
-
-        /**
-         * Strip any invalid characters from a command and return sanitised string 
-         * Anything other than the \w regex match is removed.
-         * 
-         * @return sanitised string, or null if cmd only contains invalid characters.
-         */
-        sanitizeCommand = cmd => {
-            const safe = cmd.match(word_regex);
-            if (safe == null) return null;
-            return safe.join("");
         },
 
         /**
@@ -82,7 +69,7 @@
             const parsedMessage = (spaceIndex > -1) ? msg.substring(spaceIndex + 1) : "";
 
             let command = (spaceIndex > -1) ? msg.substring(0, spaceIndex) : msg;
-            const sanitisedCommand = sanitizeCommand(command);
+            const sanitisedCommand = utils.sanitizeCommand(command);
             if (sanitisedCommand == null) return;
 
             command = `!${sanitisedCommand}`;
@@ -96,24 +83,17 @@
          * handle a 'chat' message type
          */
         processChatMessage = (context, message) => {
-
             const messageResult = sanitiseMessage(message);
 
             if (!messageResult.ok) {
                 log("Message failed validation. Will delete", messageResult);
-                client
-                    .deletemessage(channel, context.id)
-                    .then(data => log(`Message deleted from ${data}`))
-                    .finally(_ => {
-                        if (messageResult.reason != null) {
-                            sayFromChannelBot(`${context.username} ${randomStringFromSet(messageResult.reason, context.username)}`);
-                        }
-                    });
-                return;
+                deleteMessageAndRespond(context, messageResult.reason);
                 // invalid messages are ignored from further processing.
+                return;
             }
-
+            // TODO: any message further processing/analysis
         },
+
 
         /**
          * Process regular message text from chat, whisper, ...
@@ -124,53 +104,30 @@
             const messageType = context["message-type"];
             if (messageType == "action") return;
 
-            log(`Non-command message messageType:${messageType}, message:${message}`);
-
             // Handle different message types..
             switch (messageType) {
                 case "chat":
                     processChatMessage(context, message);
                     break;
                 case "whisper":
-                    // This is a whisper..
+                    log(`processMessage - Someone whispered. Message: ${message}`);
                     break;
                 default:
-                    // Something else ?
+                    log(`processMessage - Unknown message type: ${messageType}, message: ${message}`);
                     break;
             }
         },
 
-        onMessage = (target, context, msg, self) => {
-
-            if (config.debug) log("onMessage", target, context, msg, self);
-
-            const message = msg.trim();
-            const isCommand = message.charAt(0) === "!";
-
-            if (isCommand) processCommand(context, message, self);
-            else processMessage(context, message, self);
-        },
-
-        // start-up
-        onConnect = (addr, port) => {
-            log(`* Connected to ${addr}:${port}`);
-            // if(config.debug) sayFromChannelBot("Connected.");
-            overlays.title.show(`${config.botMessagePrefix} Ready`.toUpperCase(), 5, {'font-size':'24px', color:'green'});
-            srGallery.init();
-        },
-
-        // shutdown ongoing processes
-        onDisconnect = reason => {
-            log(`onDisconnect ${reason}`);
-            overlays.title.show(`${config.botMessagePrefix} Disconnected!`, 15, {'font-size':'24px', color:'red'});
-        },
-
+        
+        /**
+         * 
+         */
         setupClient = () => {
             client = new tmi.client(clientConfig)
                 .on('message', onMessage)
                 .on('connected', onConnect)
                 .on('disconnected', onDisconnect)
-                .on("clearchat", () => overlays.title.hide())
+                // .on("clearchat", () => overlays.title.hide())
                 .on("cheer", (channel, userstate, message) => {
                     log("onCheer", userstate, message);
                 })
@@ -195,6 +152,35 @@
             client.connect();
         },
 
+        onMessage = (target, context, msg, self) => {
+            if(self) return;
+
+            if (config.debug) log("onMessage", target, context, msg, self);
+
+            const message = msg.trim();
+            const isCommand = message.charAt(0) === "!";
+
+            if (isCommand) processCommand(context, message, self);
+            else processMessage(context, message, self);
+        },
+
+        // start-up
+        onConnect = (addr, port) => {
+            log(`* Connected to ${addr}:${port}`);
+            overlays.title.show(`${config.botMessagePrefix} Ready`.toUpperCase(), 5, 0, { 'font-size': '24px', color: 'green' });
+            chatbot.connected = true;
+            actions.init();
+            srGallery.init();
+        },
+
+        // shutdown ongoing processes
+        onDisconnect = reason => {
+            log(`onDisconnect ${reason}`);
+            chatbot.connected = false;
+            overlays.title.show(`${config.botMessagePrefix} Disconnected!`, 0, 0,{ 'font-size': '24px', color: 'red' });
+            actions.stopAutoActions();
+        },
+
         /**
          * populate tmi.client config with data from the `config` object defined settings.js
          */
@@ -208,5 +194,9 @@
 
     // connect to the selected twitch channel and start to listen for events to react to
     setupClient();
-    
+
+    chatbot.client = client;
+    chatbot.say = sayFromChannelBot;
+    chatbot.deletemessage = deleteMessageAndRespond;
+
 })(settings, console.log);

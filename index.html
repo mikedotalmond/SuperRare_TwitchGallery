@@ -9,7 +9,8 @@
     <script src="assets/lib/tmi.min.js"></script>
 
     <script src="./settings.js"></script>
-    <script src="./src/utility.js"></script>
+    <script src="./src/utils.js"></script>
+    <script src="./src/strings.js"></script>
 
     <script src="./src/actions.js"></script>
     <script src="./src/overlays.js"></script>
@@ -29,18 +30,31 @@
 <body>
 
     <div id="sr-gallery" class="gallery">
+        <div id="gallery-overlay">
+            <span>
+                <h1>mikedotalmond</h1>
+                <h3>SuperRare.co</h3>
+            </span>
+        </div>
+
         <img id="image-preload" class="preload" src="" />
         <div class="images">
-            <div id="srgallery_image_a" class="image"></div>
+            <div id="srgallery_image" class="image"></div>
         </div>
     </div>
 
     <div id="titleBox">
         <h1 id="titleText"></h1>
-        <div id="subtitleBox"><h1 id="subtitleText"></h1></div>
+        <div id="subtitleBox">
+            <h1 id="subtitleText"></h1>
+        </div>
     </div>
-    <div id="descBox"><h1 id="descText"></h1></div>
-    <div id="infoBox"><h1 id="infoText"></h1></div>
+    <div id="descBox">
+        <h1 id="descText"></h1>
+    </div>
+    <div id="infoBox">
+        <h1 id="infoText"></h1>
+    </div>
 
     <script src="./src/main.js"></script>
 </body>

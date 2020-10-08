@@ -15,7 +15,10 @@ const overlays = (() => {
             * @param textStyles - optional, css properties to apply to the text prior to showing it
             */
             const
-                show = (message, duration, textStyles) => {
+                show = (message, duration, delay, textStyles) => {
+
+                    if (isNaN(delay) || delay < 0) delay = 0;
+                    conf_showPopup.delay = delay;
 
                     if(textStyles !== null){
                         if (typeof textStyles === "undefined") textStyles = defaultTextStyle;
@@ -54,3 +57,10 @@ overlays.title = overlays.setupPopup("#titleText", "#titleBox");
 overlays.subtitle = overlays.setupPopup("#subtitleText", "#subtitleBox");
 overlays.desc = overlays.setupPopup("#descText", "#descBox");
 overlays.info = overlays.setupPopup("#infoText", "#infoBox");
+
+overlays.hide = () => {
+    overlays.title.hide();
+    overlays.subtitle.hide();
+    overlays.desc.hide();
+    overlays.info.hide();
+};

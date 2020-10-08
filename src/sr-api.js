@@ -6,10 +6,10 @@ const srAPI = {};
     const
         API_BASE = `https://superrare.co/sr-json/v0`,
 
-        tpl_apiGetUserURI = utility.tpl`/users?user_address=${0}`,
+        tpl_apiGetUserURI = utils.tpl`/users?user_address=${0}`,
         getUserURI = (userId) => API_BASE + tpl_apiGetUserURI(userId),
 
-        tpl_getUserAssetsURI = utility.tpl`/nfts/assets?creator_addresses=${0}&offset=${1}&limit=${2}`,
+        tpl_getUserAssetsURI = utils.tpl`/nfts/assets?creator_addresses=${0}&offset=${1}&limit=${2}`,
         getUserAssetsURI = (userId, offset, limit) => API_BASE + tpl_getUserAssetsURI(userId, offset, limit),
 
 
