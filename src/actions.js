@@ -18,7 +18,7 @@
         // action ids for periodic auto-bot messaging
         autoActions = ["!help", "!superrare"],
         autoActionsOrder = utils.randomIndexArray(autoActions.length),
-        autoActionTimes = { min: 5 * 60, max: 10 * 60 },
+        autoActionTimes = { min: 10 * 60, max: 15 * 60 },
 
         /**
          * is the user the current broadcaster?
@@ -37,7 +37,7 @@
          * When users enter that in the chat the bot will respond to the chat using the `bot_!help` string field (see strings.js)
          */
         registerSimpleTextQueryChatAction = (actionName, textGenerator) => {
-           
+
             actions[actionName] = {
                 security: (_, __) => true, // all users are allowed
                 handle: (_, __) => {
@@ -45,13 +45,13 @@
 
                     let txt;
 
-                    if(typeof textGenerator === 'function') {
+                    if (typeof textGenerator === 'function') {
                         txt = textGenerator();
-                        if(txt == null) return;
+                        if (txt == null) return;
                     } else {
                         txt = utils.randomStringFromSet(`bot_${actionName}`, settings.strings);
                     }
-                    
+
                     chatbot.say(txt);
                 }
             }
@@ -69,12 +69,14 @@
             registerSimpleTextQueryChatAction("!help");
             registerSimpleTextQueryChatAction("!superrare");
 
-            registerSimpleTextQueryChatAction("!art", () => { // custom textGenerator
+            registerSimpleTextQueryChatAction("!art", () => {
+                // a custom textGenerator, called when the action is triggered
                 const asset = srGallery.getCurrentAsset();
                 if (asset === null) return null;
 
                 const a = settings.strings['bot_!art'][0];
                 const b = settings.strings['bot_!art'][1];
+                // [`Viewing - // `, ` // - Find it on SuperRare `]
                 const message = `${a} ${asset.name} ${b} ${encodeURI(asset.url)}`;
 
                 return message;
@@ -93,11 +95,39 @@
             */
             actions['!autoChat_start'] = {
                 security: privateSecurityCheck,
-                handle: (context, textContent) => { startAutoActions(); }
+                handle: (_, __) => startAutoActions(),
             };
             actions['!autoChat_stop'] = {
                 security: privateSecurityCheck,
-                handle: (context, textContent) => { stopAutoActions(); }
+                handle: (__, _) => stopAutoActions(),
+            };
+
+            actions['!chatbot_disable'] = {
+                security: privateSecurityCheck,
+                handle: (__, _) => { chatbot.disabled = true; },
+            };
+            actions['!chatbot_enable'] = {
+                security: privateSecurityCheck,
+                handle: (__, _) => {
+                    chatbot.disabled = false;
+                    actions["!help"].handle();
+                },
+            };
+
+            /**
+             * 
+             */
+            actions['!gallery_show'] = {
+                security: privateSecurityCheck,
+                handle: (context, txt) => srGallery.show(txt),
+            };
+            actions['!gallery_hide'] = {
+                security: privateSecurityCheck,
+                handle: (__, _) => srGallery.hide(),
+            };
+            actions['!gallery_reset'] = {
+                security: privateSecurityCheck,
+                handle: (_, __) => srGallery.resetAssetOrder(),
             };
         },
 
@@ -108,10 +138,6 @@
         startAutoActions = () => {
 
             stopAutoActions();
-
-            // log("actions::startAutoActions");
-            // log("actions are:", autoActions);
-            // log("action order:", autoActionsOrder);
 
             const time = autoActionTimes.min + Math.random() * (autoActionTimes.max - autoActionTimes.min);
             log(`next auto chat action in ${time} seconds`);
@@ -147,10 +173,10 @@
         init = () => {
             log("actions::init");
             initPublicChatActions();
-            // initPrivateChatActions();
-            // startAutoActions();
+            initPrivateChatActions();
+            startAutoActions();
 
-            // send initial 'what the channel is' message on startup...
+            // send initial 'what the channel is' message on start-up...
             actions["!help"].handle();
             actions["!superrare"].handle();
         };
@@ -163,9 +189,5 @@
     //
     // store
     settings.actions = actions;
-
-    //
-    // start
-    // init();
 
 })(console.log);

@@ -7,10 +7,14 @@
     height: 100%;
     background-size: cover;
     background-position: center;
-    scale: 100%;
     image-rendering: crisp-edges;
 }
 
+.gallery > .video-container {
+    width: 1920px;
+    height: 1080px;
+    margin: 0 auto;
+}
 
 .gallery img.preload {
     visibility: hidden;

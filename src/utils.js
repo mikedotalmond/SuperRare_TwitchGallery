@@ -31,7 +31,7 @@ const utils = {};
         /**
          * Random comparator for randomising arrays
          */
-        randomSort = (a, b) => Math.round((Math.random() * 0.5) * 2.0),
+        randomSort = (a, b) => (Math.random() - 0.5) * 2.0,
 
         /**
          * build an array of random indices from zero to numElements-1

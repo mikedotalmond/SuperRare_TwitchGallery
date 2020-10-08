@@ -2,7 +2,8 @@
  * Entry point for creating a new tmi.client to listen for Twitch channel and chat events.
  */
 
-const chatbot = { connected: false, client: null };
+const chatbot = { connected: false, client: null, disabled:true };
+const inOBS = (typeof window.obsstudio === "object"); // when running in browser source for OBS this object gets added to the window 
 
 ((config, log) => {
 
@@ -12,7 +13,7 @@ const chatbot = { connected: false, client: null };
         actions = config.actions,
         channel = config.channel,
         strings = config.strings,
-        sayFromChannel = (message) => client.say(channel, message),
+        sayFromChannel = (message) => { if (chatbot.connected && !chatbot.disabled) client.say(channel, message); },
         sayFromChannelPrefixed = (prefix, message) => sayFromChannel(`${prefix}${message}`),
         sayFromChannelBot = (message) => sayFromChannelPrefixed(config.botMessagePrefix, message),
 
@@ -118,7 +119,7 @@ const chatbot = { connected: false, client: null };
             }
         },
 
-        
+
         /**
          * 
          */
@@ -126,34 +127,16 @@ const chatbot = { connected: false, client: null };
             client = new tmi.client(clientConfig)
                 .on('message', onMessage)
                 .on('connected', onConnect)
-                .on('disconnected', onDisconnect)
-                // .on("clearchat", () => overlays.title.hide())
-                .on("cheer", (channel, userstate, message) => {
-                    log("onCheer", userstate, message);
-                })
-                .on("notice", (channel, msgid, message) => {
-                    log("onNotice", msgid, message);
-                })
-                .on("raided", (channel, username, viewers) => {
-                    log("onRaided", username, viewers);
-                })
-                .on("subscription", (channel, username, method, message, userstate) => {
-                    log("onSubscription", username, method, message, userstate);
-                })
-                .on("resub", (channel, username, months, message, userstate, methods) => {
-                    log("onResub", username, months, message, userstate, methods);
-                    let cumulativeMonths = ~~userstate["msg-param-cumulative-months"];
-                })
-                .on("subgift", (channel, username, streakMonths, recipient, methods, userstate) => {
-                    log("onSubgift", username, streakMonths, recipient, methods, userstate);
-                    let senderCount = ~~userstate["msg-param-sender-count"];
-                });
+                .on('disconnected', onDisconnect);
 
             client.connect();
         },
 
+        /**
+         * 
+         */
         onMessage = (target, context, msg, self) => {
-            if(self) return;
+            if (self) return;
 
             if (config.debug) log("onMessage", target, context, msg, self);
 
@@ -164,7 +147,9 @@ const chatbot = { connected: false, client: null };
             else processMessage(context, message, self);
         },
 
-        // start-up
+        /**
+         * tmi client connected
+         */
         onConnect = (addr, port) => {
             log(`* Connected to ${addr}:${port}`);
             overlays.title.show(`${config.botMessagePrefix} Ready`.toUpperCase(), 5, 0, { 'font-size': '24px', color: 'green' });
@@ -173,12 +158,15 @@ const chatbot = { connected: false, client: null };
             srGallery.init();
         },
 
-        // shutdown ongoing processes
+        /**
+         * tmi client disconnect, shut down
+         */
         onDisconnect = reason => {
             log(`onDisconnect ${reason}`);
             chatbot.connected = false;
-            overlays.title.show(`${config.botMessagePrefix} Disconnected!`, 0, 0,{ 'font-size': '24px', color: 'red' });
+            overlays.title.show(`${config.botMessagePrefix} Disconnected!`, 0, 0, { 'font-size': '24px', color: 'red' });
             actions.stopAutoActions();
+            srGallery.hide();
         },
 
         /**

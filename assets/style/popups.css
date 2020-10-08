@@ -46,8 +46,15 @@
     color: #f6f6f6;
     font-size: 28px;
     font-weight: 400;
-    padding: 16px;
     margin-bottom: 0px;
+
+    /* limit to 2 lines with ellipsis */
+    border: 32px solid transparent;
+    padding: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 
@@ -63,11 +70,14 @@
     max-width: calc(40% - 32px);
     max-height: calc(100% - 32px);
 }
-#infoText {
+
+.infoText {
+    display: inline-block;
 	background-color: #fffffffa;
 	color: #100;
-	font-size: 26px;
+	font-size: 32px;
     font-weight: 800;
     padding: 2px 8px 2px 8px;
     margin-top: 0px;
+    margin-left: 8px;
 }
