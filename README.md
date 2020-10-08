@@ -7,5 +7,5 @@ Includes a simple bot to reply to commands in the chat.
 
 This is early and messy and prototype-y, so don't expect too much. More information will appear here eventually.
 
-Example:
+Example output:
 ![galley-example](https://pbs.twimg.com/media/Ej0tJ0wWkAMJRMS?format=jpg&name=large)
