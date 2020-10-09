@@ -1,25 +1,28 @@
-const srGallery = {};
+const srGallery = {
 
-srGallery.config = {
-    userAddress: "0x44821f92d83c5b6055044ebf3de64574c894854a",
-    totalUserArtworks: 179, // no api for this, so fill manually for now
-    randomOrder: true,
-    infoText: "!art",
-    duration: { total: 30, title: 30, subtitle: 29.8, description: 15 },
-    ignoredAssets: [
-        /** Ignoring various assets, by their API position
-         * Usually because they don't work too well at 1920x1080 (with the current fullpage viewing method) */
-        0, 3, 5, 7, 9, 11, 12, 13, 15, 16, 17, 23, 25, 27, 31, 32, 35, 36, 37, 39, 40, 41, 42, 44, 45,
-        47, 48, 50, 51, 53, 54, 57, 58, 61, 62, 65, 66, 67, 68, 69,
-        70, 71, 81, 88, 105, 112, 129, 130, 134, 140, 141,
-        142, 143, 144, 146, 152, 160, 161, 163, 164, 165, 176, 177, 178
-    ],
+    config: {
+        displaySize: { width: 1920, height: 1080 },
+        userAddress: "0x44821f92d83c5b6055044ebf3de64574c894854a",
+        totalUserArtworks: 179, // no api for this, so fill manually for now
+        randomOrder: true,
+        infoText: "!art",
+        duration: { total: 30, title: 30, subtitle: 29.8, description: 15 },
+        ignoredAssets: [
+            /** Ignoring various assets, by their API position
+             * Usually because they don't work too well at 1920x1080 (with the current fullpage viewing method) */
+            0, 3, 5, 7, 9, 11, 12, 13, 15, 16, 17, 23, 25, 27, 31, 32, 35, 36, 37, 39, 40, 41, 42, 44, 45,
+            47, 48, 50, 51, 53, 54, 57, 58, 61, 62, 65, 66, 67, 68, 69,
+            70, 71, 81, 88, 105, 112, 129, 130, 134, 140, 141,
+            142, 143, 144, 146, 152, 160, 161, 163, 164, 165, 176, 177, 178
+        ],
+    }
 };
+
 
 ((gallery, config, log) => {
 
     let
-        container = null, preloadImg = null, overlay,
+        container = null, preloadImg = null, overlay, progressBar,
         userData = null,
         pendingAsset = null,
         currentAsset = null,
@@ -39,6 +42,7 @@ srGallery.config = {
             preloadImg = document.getElementById("image-preload");
             overlay = document.getElementById("gallery-overlay");
             videoElement = document.getElementById("sr-gallery-video");
+            progressBar = document.getElementById("progressBox");
             hide();
 
             userData = await srAPI.getUserData(config.userAddress);
@@ -104,8 +108,9 @@ srGallery.config = {
         },
 
         showIdleOverlay = () => {
-            gsap.to(overlay, { top: 0, height: '1080px', duration: 0.2, ease: 'expo.In' });
-            gsap.set(imageElementId, { autoAlpha: 0, delay: 0.2 });
+            gsap.to(overlay, { top: 0, height: '100%', duration: 0.3, ease: 'expo.In' });
+            gsap.to(progressBar, { width: "0.1%", autoAlpha: 0, duration: 0.3, });
+            gsap.set(imageElementId, { autoAlpha: 0, delay: 0.3 });
             overlays.hide();
         },
 
@@ -141,26 +146,63 @@ srGallery.config = {
             const haveMedia = m != null;
 
             if (haveMedia) {
+                // seems that only newer SR assets have the media node
                 log("have media data", m.dimensions, m.mimeType, m.uri);
             }
 
             const isVideo = haveMedia && m.mimeType.indexOf("video") > -1;
             asset.isVideo = isVideo;
-
             log("isVideo", isVideo);
 
             if (isVideo) {
-                if (m.mimeType.indexOf("video") > -1) {
-                    videoElement.src = m.uri;
-                }
+                // load the video. onloadeddata is called after 1st frame is ready and video is ok to be played
+                videoElement.onloadeddata = onVideoDataLoad;
+                videoElement.src = m.uri;
+            } else {
+                // start loading the next image asset...
+                preloadImg.onload = onImagePreload;
+                preloadImg.src = asset.image;
             }
-
-            // start loading the next image asset...
-            preloadImg.onload = onImagePreload;
-            preloadImg.src = asset.image;
 
             // 1st time? set asset now 
             if (currentAsset == null) currentAsset = pendingAsset;
+        },
+
+
+        onVideoDataLoad = () => {
+
+            currentAsset = pendingAsset;
+            pendingAsset = null;
+
+            // have metadata and the 1st frame, can show video
+            log("video element onloadeddata ");
+            log(videoElement.videoWidth, videoElement.videoHeight);
+
+            if (videoElement.videoWidth == 0 || videoElement.videoHeight == 0) {
+                log("Error accessing video dimensions", videoElement);
+
+            } else {
+
+                const dimensions = {
+                    width: videoElement.videoWidth,
+                    height: videoElement.videoHeight,
+                    aspect: videoElement.videoWidth / videoElement.videoHeight,
+                };
+
+                log("image dimensions", dimensions);
+
+                if (dimensions.width > config.displaySize.width || dimensions.height > config.displaySize.height) {
+                    // image is bigger than screen
+                    log("img > screen");
+                } else {
+                    // image is smaller than screen
+                    log("img < screen");
+                }
+            }
+            
+            gsap.set(imageElementId, { autoAlpha: 0, scale: 1.0 });
+            gsap.set("#progressBox", { width: "0.1%", autoAlpha: 0 });
+            onAssetShown();
         },
 
         /**
@@ -171,10 +213,33 @@ srGallery.config = {
             currentAsset = pendingAsset;
             pendingAsset = null;
 
-            // set image and show after a little delay
-            gsap.set(imageElementId, { autoAlpha: 0, "background-image": `url(${preloadImg.src})` });
-            gsap.to(imageElementId, { autoAlpha: 1, delay: 0.3, duration: 0.3, ease: 'quad.In', onComplete: onAssetShown });
+            if (preloadImg.naturalWidth == 0 || preloadImg.naturalHeight == 0) {
+                log("Error accessing image dimensions", preloadImg);
+                
+            } else {
 
+                const dimensions = {
+                    width: preloadImg.naturalWidth,
+                    height: preloadImg.naturalHeight,
+                    aspect: preloadImg.naturalWidth / preloadImg.naturalHeight,
+                };
+
+                log("image dimensions", dimensions);
+
+                if (dimensions.width > config.displaySize.width || dimensions.height > config.displaySize.height) {
+                    // image is bigger than screen
+                    log("img > screen");
+                } else {
+                    // image is smaller than screen
+                    log("img < screen");
+                }
+            }
+
+            // set image and show after a little delay
+            gsap.set(imageElementId, { autoAlpha: 0, scale: 1.0, "background-image": `url(${preloadImg.src})` });
+            gsap.to(imageElementId, { autoAlpha: 1, delay: 0.3, duration: 0, ease: 'quad.In', onComplete: onAssetShown });
+
+            gsap.set("#progressBox", { width: "0.1%", autoAlpha: 0 });
             // image was loaded, so empty the 'preload' image
             preloadImg.src = "";
         },
@@ -183,27 +248,24 @@ srGallery.config = {
         // asset is ready and being shown - show text informations and set a timer for the next change
         onAssetShown = () => {
 
-            if (currentAsset.isVideo) {
-                gsap.set(imageElementId, { autoAlpha: 0, delay: 0.2, duration: 0.3 });
-
-                if (inOBS) videoElement.muted = false; // need to be running in an obs browser source to unmute without user interaction
-                videoElement.play();
-                // playing video with audio won't usually work without user interaction, but works ok in the headless OBS browser
-            }
-
-
-            // animate the overlay out
-            gsap.to(overlay, { top: 0, height: '123px', duration: 0.3, ease: 'expo.Out' });
+            // animate the overlay up
+            gsap.to(overlay, { top: 0, height: '123px', delay:0.3, duration: 0.3, ease: 'expo.Out', onComplete:() => {
+                if (currentAsset.isVideo) {
+                    if (inOBS) videoElement.muted = false; // need to be running in an obs browser source (headless) to unmute without user interaction
+                    videoElement.play();
+                }
+            } });
+            // continue, animate it up and off screen
             gsap.to(overlay, {
-                top: '-212px', height: '0px', duration: 0.3, delay: 1.2, ease: 'expo.Out',
-                onComplete: () => showAssetInfo(0.4)
+                top: '-212px', height: '0px', duration: 0.3, delay: 1.5, ease: 'expo.Out',
+                onComplete: () => showAssetInfo(0.4),
             });
 
-            // next
-            updateTimeout = setTimeout(() => next(), config.duration.total * 1000);
-
-            // send a chatbot message about the current artwork
-            settings.actions['!art'].handle();
+            gsap.set("#progressBox", { width: "0.1%", autoAlpha: 0 });
+            gsap.to("#progressBox", { autoAlpha: 1, delay: config.duration.total * 0.1, duration: config.duration.total * 0.1 });
+            
+            // animate progress box to 100% and move onto the next() gallery item once completed
+            gsap.to("#progressBox", { width: "100%", duration: config.duration.total, ease: 'none', onComplete:() => next() });
         },
 
 
@@ -212,7 +274,10 @@ srGallery.config = {
             overlays.info.show(config.infoText, 0, delay, null);
             overlays.title.show(asset.metadata.name, config.duration.title, delay);
             overlays.subtitle.show(`${asset.metadata.createdBy}, ${asset.metadata.yearCreated}`, config.duration.subtitle, delay + 0.1, null);
-            if(!asset.isVideo) overlays.desc.show(asset.description, config.duration.description, delay + 0.2, null);
+            if (!asset.isVideo) overlays.desc.show(asset.description, config.duration.description, delay + 0.2, null);
+            
+            // send a chatbot message about the current artwork
+            settings.actions['!art'].handle();
         },
 
 

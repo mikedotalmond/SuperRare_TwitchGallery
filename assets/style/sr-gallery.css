@@ -5,15 +5,19 @@
     width: 100%;
     position: absolute;
     height: 100%;
-    background-size: cover;
+    /* background-size: cover; */
+    background-size: contain;
+    background-repeat: repeat-x;
     background-position: center;
     image-rendering: crisp-edges;
+    scale: 1.0;
 }
 
 .gallery > .video-container {
     width: 1920px;
     height: 1080px;
     margin: 0 auto;
+    scale: 1.0;
 }
 
 .gallery img.preload {
@@ -33,4 +37,17 @@
 	top: 0px;
     overflow: clip;
     z-index: 1;
+}
+
+.gallery #progressBox {
+    visibility: hidden;
+    opacity: 0;
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 100%;
+	height: 4px;
+    background-color: #fff;
+    background: linear-gradient( black 50%,white 50%);
+	z-index: 1;
 }
