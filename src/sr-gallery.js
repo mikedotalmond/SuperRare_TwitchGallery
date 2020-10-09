@@ -5,7 +5,7 @@ srGallery.config = {
     totalUserArtworks: 179, // no api for this, so fill manually for now
     randomOrder: true,
     infoText: "!art",
-    duration: { total: 180, title: 110, subtitle: 109, description: 30 },
+    duration: { total: 30, title: 30, subtitle: 29.8, description: 15 },
     ignoredAssets: [
         /** Ignoring various assets, by their API position
          * Usually because they don't work too well at 1920x1080 (with the current fullpage viewing method) */
