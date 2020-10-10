@@ -8,8 +8,8 @@
     /* background-size: cover; */
     background-size: contain;
     background-repeat: repeat-x;
-    background-position: center;
-    image-rendering: crisp-edges;
+    background-position: 50% 50%;
+    image-rendering: optimizeQuality;
     scale: 1.0;
 }
 

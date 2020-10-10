@@ -6,15 +6,13 @@ const srGallery = {
         totalUserArtworks: 179, // no api for this, so fill manually for now
         randomOrder: true,
         infoText: "!art",
-        duration: { total: 40, title: 30, subtitle: 29.8, description: 15 },
+        duration: { total: 40, title: 30, subtitle: 29.9, description: 15 },
         ignoredAssets: [
-            /** Ignoring various assets, by their API position
-             * Usually because they don't work too well at 1920x1080 (with the current fullpage viewing method) */
-            /*0, 3, 5, 7, 9, 11, 12, 13, 15, 16, 17, 23, 25, 27, 31, 32, 35, 36, 37, 39, 40, 41, 42, 44, 45,*/
-            // 47, 48, 50, 51, 53, 54, 57, 58, 61, 62, 65, 66, 67, 68, 69,
-            // 70, 71, 81, 88, 105, 112, 129, 130, 134, 140, 141,
-            // 142, 143, 144, 146, 152, 165, 176, 177, 178
-            160,161,163, 164,
+            /** Ignoring various assets, by their API position */
+            9, 12, 13, 15, 16, 25, 32, 35, 39, 40, 105, 112,
+            134, 140, 141,
+            142, 143, 144, /*177,polar*/
+            112, 150, 160, 161, 163, 164,
         ],
     }
 };
@@ -100,91 +98,86 @@ const srGallery = {
         show = async (index) => {
             clearTimeout(updateTimeout);
             resetAssetOrder();
-            showIdleOverlay();
 
             if (typeof index !== 'number') index = parseInt(index, 10);
             if (Number.isInteger(index) && assetOrder.indexOf(index) !== -1) {
                 assetIndex.current = assetOrder.indexOf(index);
             }
+
             await updateState();
         },
 
         hide = () => {
-            clearTimeout(updateTimeout);
-            overlays.hide();
-            showIdleOverlay();
+            killSceneTweens();
+            showIdleOverlay(0.3);
         },
 
-        showIdleOverlay = () => {
+        showIdleOverlay = (duration) => {
+            killSceneTweens();
             gsap.killTweensOf(loadSpinner);
             gsap.set(loadSpinner, { rotation: 0 });
             gsap.to(loadSpinner, { rotation: 360, duration: 1, repeat: -1, ease: 'none' });
-            gsap.to(overlay, { top: 0, height: '100%', duration: 0.3, ease: 'expo.In' });
-            gsap.to(progressBar, { width: "0.1%", autoAlpha: 0, duration: 0.3, });
-            gsap.to(imageElement, { autoAlpha: 0, duration: 0.3, });
+            gsap.to(overlay, { top: 0, height: '100%', duration: duration, ease: 'expo.In' });
+            gsap.to(progressBar, { width: "0.1%", autoAlpha: 0, duration: duration, });
+            gsap.to(imageElement, { autoAlpha: 0, duration: duration, });
             overlays.hide();
         },
 
-        updateState = async () => {
-
+        killSceneTweens = () => {
             gsap.killTweensOf(overlay);
             gsap.killTweensOf(imageElement);
             gsap.killTweensOf(videoContainer);
             gsap.killTweensOf(progressBar);
+            clearTimeout(updateTimeout);
+        },
+
+
+        updateState = async () => {
+
+            const overlaySlideTime = 0.3;
+            const t1 = Date.now();
+
+            showIdleOverlay(overlaySlideTime); // takes 0.3 seconds to show, so wait at least that long when setting src of new content below 
 
             log("updateState - preparing asset", assetOrder[assetIndex.current]);
 
-            clearTimeout(updateTimeout);
-
-            let asset = await srAPI.getUserAssets(config.userAddress, assetOrder[assetIndex.current], 1);
+            const asset = await srAPI.getUserAssets(config.userAddress, assetOrder[assetIndex.current], 1);
             if (asset == null || asset.length == 0) {
                 log("Error loading asset data, aborting. Will try again later.");
                 updateTimeout = setTimeout(() => next(), config.duration.total * 1000);
                 return;
             }
-
             // api returns an array of assets, but here it will always be a single item
-            asset = asset[0];
+            pendingAsset = asset[0];
 
-            const metadata = await srAPI.getJSONResponse(asset.metadataUri);
-            asset.metadata = metadata;
+            // load asset metadata
+            pendingAsset.metadata = await srAPI.getJSONResponse(pendingAsset.metadataUri);
 
-            pendingAsset = asset;
-            // 1st time? set asset now, otherwise it's set once preload is complete
-            if (currentAsset == null) currentAsset = pendingAsset;
+            // subtract api load time from overlaySlideTime and only set the asset src below once the overlaySlideTime has completed
+            const apiTime = (Date.now() - t1) * 0.001;
+            const loadDelay = Math.max(0, (overlaySlideTime - apiTime));
+            // log("apiTime", apiTime);
+            // log( "loadDelay:", loadDelay);
 
-            // got api data about the next asset, so hide current image and overlays before loading it
-            showIdleOverlay();
+            const haveMedia = pendingAsset.media != null;
+            pendingAsset.isVideo = haveMedia && pendingAsset.media.mimeType.indexOf("video") > -1;
 
-            // check asset type, resolution, etc.
-            // is image? is mp4?
-
-            const m = asset.media;
-            const haveMedia = m != null;
-
-            if (haveMedia) {
-                // only certain newer SR assets have the media node, so using this to get asset dimensions is not reliable
-                // however, all video assets seem to have it (videos are newer to the platform), 
-                // so it's a good way of accurately identifying videos
-                log("have media data", m.dimensions, m.mimeType, m.uri);
-            }
-
-            asset.isVideo = haveMedia && m.mimeType.indexOf("video") > -1;
-            // asset.isGif = haveMedia && m.mimeType.indexOf("gif") > -1;
-
-            if (asset.isVideo) {
+            if (pendingAsset.isVideo) {
                 // onloadeddata is called after video metadata is readable and the 1st frame is ready
                 videoElement.onloadeddata = onVideoDataLoad;
                 // load the video...
-                gsap.set(videoContainer, { autoAlpha: 0 });
-                videoElement.src = m.uri;
+                gsap.set(videoContainer, { autoAlpha: 0, delay: loadDelay });
+                gsap.set(videoElement, { src: pendingAsset.media.uri, delay: loadDelay });
             } else {
                 preloadImg.onload = onImagePreload;
                 // start loading the next image asset...
-                preloadImg.src = asset.image;
+                gsap.set(preloadImg, { src: pendingAsset.image, delay: loadDelay });
             }
 
-            log(asset);
+            // 1st time? set asset now, otherwise it's set once preload is complete
+            if (currentAsset == null) currentAsset = pendingAsset;
+
+            log(pendingAsset);
         },
 
 
@@ -262,8 +255,12 @@ const srGallery = {
             }
 
             // set image and show after a little delay
-            gsap.set(imageElement, { opacity: 1, visibility: 'visible', scale: 1.0, "background-image": `url(${preloadImg.src})` });
-            gsap.to(imageElement, { delay: 1.25, duration: 0, autoAlpha: 1, ease: 'quad.In', onComplete: onAssetShown });
+            gsap.set(imageElement, {
+                scale: 1.0, opacity: 1, visibility: 'visible',
+                "background-image": `url(${preloadImg.src})`,
+                'background-position-x': '50%',
+            });
+            gsap.to(imageElement, { delay: 2, duration: 0, autoAlpha: 1, ease: 'quad.In', onComplete: onAssetShown });
 
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
             // image was loaded, so empty the 'preload' image
@@ -315,25 +312,39 @@ const srGallery = {
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
             gsap.to(progressBar, { autoAlpha: 1, delay: delay, duration: 0.7 });
 
-            if (currentAsset.dimensions.endScale != 1.0) {
+            const endScale = currentAsset.dimensions.endScale;
+            //
+            if (endScale != 1.0) {
                 if (currentAsset.isVideo) {
                     gsap.set(videoContainer, { scale: 1.0 });
                     gsap.to(videoContainer, {
-                        scale: currentAsset.dimensions.endScale, delay: delay,
+                        scale: endScale, delay: delay,
                         duration: config.duration.total * 0.8 - delay,
                         ease: 'quad.inOut'
                     });
                 } else {
+                    const xPct = 50 + 25 * (Math.random() * .5);
                     gsap.to(imageElement, {
-                        scale: currentAsset.dimensions.endScale, delay: delay,
+                        scale: endScale, delay: delay,
                         duration: config.duration.total * 0.8 - delay,
+                        'background-position-x': endScale > 2.0 ? xPct + '%' : '50%',
                         ease: 'quad.inOut'
                     });
                 }
             }
 
             // animate progress box to 100% over time and move onto the next() gallery item once completed
-            gsap.to(progressBar, { width: "100%", duration: config.duration.total, ease: 'none', onComplete: () => next() });
+
+            let duration;
+            if (currentAsset.isVideo && videoElement.duration > config.duration.total) {
+                // play the entirety of videos that are longer then the configured duration, 
+                duration = videoElement.duration;
+            } else {
+                duration = config.duration.total;
+            }
+
+            log("duration", duration);
+            gsap.to(progressBar, { width: "100%", duration: duration, ease: 'none', onComplete: () => next() });
         },
 
 
