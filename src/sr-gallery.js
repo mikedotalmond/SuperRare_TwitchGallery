@@ -50,7 +50,7 @@ const srGallery = {
             hide();
 
             userData = await srAPI.getUserData(config.userAddress);
-            // log("userData", userData);
+            log("userData", userData);
 
             gsap.set(overlay, { autoAlpha: 1, top: 0, height: '100%' });
 
@@ -137,7 +137,8 @@ const srGallery = {
             const overlaySlideTime = 0.3;
             const t1 = Date.now();
 
-            showIdleOverlay(overlaySlideTime); // takes 0.3 seconds to show, so wait at least that long when setting src of new content below 
+            showIdleOverlay(overlaySlideTime);
+            // takes overlaySlideTime seconds to show, so wait at least that long when setting src of new content below 
 
             log("updateState - preparing asset", assetOrder[assetIndex.current]);
 
@@ -157,7 +158,7 @@ const srGallery = {
             const apiTime = (Date.now() - t1) * 0.001;
             const loadDelay = Math.max(0, (overlaySlideTime - apiTime));
             // log("apiTime", apiTime);
-            // log( "loadDelay:", loadDelay);
+            // log("loadDelay:", loadDelay);
 
             const haveMedia = pendingAsset.media != null;
             pendingAsset.isVideo = haveMedia && pendingAsset.media.mimeType.indexOf("video") > -1;
@@ -166,12 +167,24 @@ const srGallery = {
                 // onloadeddata is called after video metadata is readable and the 1st frame is ready
                 videoElement.onloadeddata = onVideoDataLoad;
                 // load the video...
-                gsap.set(videoContainer, { autoAlpha: 0, delay: loadDelay });
-                gsap.set(videoElement, { src: pendingAsset.media.uri, delay: loadDelay });
+                if (loadDelay > 0) {
+                    updateTimeout = setTimeout(() => {
+                        gsap.set(videoContainer, { autoAlpha: 0 });
+                        videoElement.src = pendingAsset.media.uri;
+                    }, loadDelay * 1000);
+                } else {
+                    gsap.set(videoContainer, { autoAlpha: 0 });
+                    videoElement.src = pendingAsset.media.uri;
+                }
+
             } else {
                 preloadImg.onload = onImagePreload;
                 // start loading the next image asset...
-                gsap.set(preloadImg, { src: pendingAsset.image, delay: loadDelay });
+                if (loadDelay > 0) {
+                    updateTimeout = setTimeout(() => { preloadImg.src = pendingAsset.image; }, loadDelay * 1000);
+                } else {
+                    preloadImg.src = pendingAsset.image;
+                }
             }
 
             // 1st time? set asset now, otherwise it's set once preload is complete
@@ -182,6 +195,8 @@ const srGallery = {
 
 
         onVideoDataLoad = () => {
+
+            log("onVideoDataLoad");
 
             currentAsset = pendingAsset;
             pendingAsset = null;
@@ -198,7 +213,6 @@ const srGallery = {
                     config.displaySize.width, config.displaySize.height,
                     true
                 );
-
                 log("video dimensions", currentAsset.dimensions);
             }
 
@@ -241,6 +255,8 @@ const srGallery = {
          */
         onImagePreload = () => {
 
+            log("onImagePreload");
+
             currentAsset = pendingAsset;
             pendingAsset = null;
 
@@ -273,6 +289,7 @@ const srGallery = {
            show text informations and set a timer for the next change
          */
         onAssetShown = () => {
+            log("onAssetShown");
 
             gsap.killTweensOf(overlay);
             gsap.killTweensOf(imageElement);
