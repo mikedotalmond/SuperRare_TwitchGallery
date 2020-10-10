@@ -11,9 +11,10 @@ const srGallery = {
             /** Ignoring various assets, by their API position
              * Usually because they don't work too well at 1920x1080 (with the current fullpage viewing method) */
             /*0, 3, 5, 7, 9, 11, 12, 13, 15, 16, 17, 23, 25, 27, 31, 32, 35, 36, 37, 39, 40, 41, 42, 44, 45,*/
-            47, 48, 50, 51, 53, 54, 57, 58, 61, 62, 65, 66, 67, 68, 69,
-            70, 71, 81, 88, 105, 112, 129, 130, 134, 140, 141,
-            142, 143, 144, 146, 152, 160, 161, 163, 164, 165, 176, 177, 178
+            // 47, 48, 50, 51, 53, 54, 57, 58, 61, 62, 65, 66, 67, 68, 69,
+            // 70, 71, 81, 88, 105, 112, 129, 130, 134, 140, 141,
+            // 142, 143, 144, 146, 152, 165, 176, 177, 178
+            160,161,163, 164,
         ],
     }
 };
@@ -120,6 +121,7 @@ const srGallery = {
             gsap.to(loadSpinner, { rotation: 360, duration: 1, repeat: -1, ease: 'none' });
             gsap.to(overlay, { top: 0, height: '100%', duration: 0.3, ease: 'expo.In' });
             gsap.to(progressBar, { width: "0.1%", autoAlpha: 0, duration: 0.3, });
+            gsap.to(imageElement, { autoAlpha: 0, duration: 0.3, });
             overlays.hide();
         },
 
@@ -156,7 +158,6 @@ const srGallery = {
 
             // check asset type, resolution, etc.
             // is image? is mp4?
-            videoElement.src = "";
 
             const m = asset.media;
             const haveMedia = m != null;
@@ -175,6 +176,7 @@ const srGallery = {
                 // onloadeddata is called after video metadata is readable and the 1st frame is ready
                 videoElement.onloadeddata = onVideoDataLoad;
                 // load the video...
+                gsap.set(videoContainer, { autoAlpha: 0 });
                 videoElement.src = m.uri;
             } else {
                 preloadImg.onload = onImagePreload;
@@ -207,9 +209,9 @@ const srGallery = {
                 log("video dimensions", currentAsset.dimensions);
             }
 
-            // gsap.set(imageElement, { autoAlpha: 0, scale: 1.0 });
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
-            onAssetShown();
+            gsap.to(videoContainer, { autoAlpha: 1, delay: 0.3, duration: 0 });
+            gsap.to(imageElement, { autoAlpha: 0, scale: 1.0, delay: 0.3, duration: 0, onComplete: () => onAssetShown() });
         },
 
 
@@ -261,7 +263,7 @@ const srGallery = {
 
             // set image and show after a little delay
             gsap.set(imageElement, { opacity: 1, visibility: 'visible', scale: 1.0, "background-image": `url(${preloadImg.src})` });
-            gsap.to(imageElement, { delay: 1.25, duration: 0, ease: 'quad.In', onComplete: onAssetShown });
+            gsap.to(imageElement, { delay: 1.25, duration: 0, autoAlpha: 1, ease: 'quad.In', onComplete: onAssetShown });
 
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
             // image was loaded, so empty the 'preload' image
@@ -281,6 +283,13 @@ const srGallery = {
             gsap.killTweensOf(progressBar);
 
             var delay = 0.75;
+
+            if (currentAsset.isVideo) {
+                gsap.set(imageElement, { autoAlpha: 0 });
+            } else {
+                videoElement.src = "";
+                gsap.set(imageElement, { autoAlpha: 1 });
+            }
 
             // animate the overlay up, out of th way
             gsap.to(overlay, {
