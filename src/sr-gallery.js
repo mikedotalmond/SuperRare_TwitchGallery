@@ -217,7 +217,7 @@ const srGallery = {
             }
 
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
-            gsap.to(videoContainer, { autoAlpha: 1, delay: 0.3, duration: 0 });
+            gsap.to(videoContainer, { autoAlpha: 1, delay: 0.3, scale: 1.0, duration: 0 });
             gsap.to(imageElement, { autoAlpha: 0, scale: 1.0, delay: 0.3, duration: 0, onComplete: () => onAssetShown() });
         },
 
