@@ -1,8 +1,8 @@
 const overlays = (() => {
 
     const
-        conf_showPopup = { autoAlpha: 1, duration: 0.3, ease: "quad.In" },
-        conf_hidePopup = { autoAlpha: 0, duration: 0.2, ease: 'quad.Out' },
+        conf_showPopup = { autoAlpha: 1, duration: 0.3, ease: "power4.In" },
+        conf_hidePopup = { autoAlpha: 0, duration: 0.2, ease: 'power4.Out' },
         defaultTextStyle = { 'font-size': '46px', 'color': 'white', 'background-color': 'black' },
 
         setupPopup = (textSelector, containerSelector) => {

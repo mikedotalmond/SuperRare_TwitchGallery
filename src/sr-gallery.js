@@ -276,7 +276,21 @@ const srGallery = {
                 "background-image": `url(${preloadImg.src})`,
                 'background-position-x': '50%',
             });
-            gsap.to(imageElement, { delay: 2, duration: 0, autoAlpha: 1, ease: 'quad.In', onComplete: onAssetShown });
+
+            if (currentAsset.dimensions != null && currentAsset.dimensions.endScale > 2.0) {
+                // Big image? Add it to the prevent-gc div and set size to endScale.
+                // This is to (try to) ensure the whole thing is kept in memory
+                // to try to prevent GC stuttering when scaling up from smaller scales to 1:1 
+                gsap.set("#srgallery_image_prevent-gc", {
+                    "background-image": `url(${preloadImg.src})`,
+                    'background-position-x': '50%',
+                    scale: currentAsset.dimensions.endScale,
+                });
+            } else {
+                gsap.set("#srgallery_image_prevent-gc", { "background-image": null, scale: 1.0 });
+            }
+
+            gsap.to(imageElement, { delay: 2, duration: 0, autoAlpha: 1, ease: 'power4.In', onComplete: onAssetShown });
 
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
             // image was loaded, so empty the 'preload' image
@@ -337,16 +351,22 @@ const srGallery = {
                     gsap.to(videoContainer, {
                         scale: endScale, delay: delay,
                         duration: config.duration.total * 0.8 - delay,
-                        ease: 'quad.inOut'
+                        ease: 'power4.inOut'
                     });
                 } else {
                     const xPct = 50 + 25 * (Math.random() * .5);
+                    gsap.set(imageElement, { 'image-rendering': 'auto' });
                     gsap.to(imageElement, {
                         scale: endScale, delay: delay,
                         duration: config.duration.total * 0.8 - delay,
                         'background-position-x': endScale > 2.0 ? xPct + '%' : '50%',
-                        ease: 'quad.inOut'
+                        ease: 'power4.inOut'
                     });
+                }
+            } else {
+                if (!currentAsset.isVideo) {
+                    // use nearest neighbour for images at or below the screen size
+                    gsap.set(imageElement, { 'image-rendering': 'pixelated' });
                 }
             }
 
