@@ -16,7 +16,7 @@
     /* 
     * In Chrome I seem to get annoyingly large pauses due to GC when zooming in (changing the scale) on big images (> 4k x 4k pixels)
     * This is used to try and combat that by keeping a copy of the full size image in memory and rendered (although not visible to the user)
-    * Seems to work for now.... presumably at the cost of higher memory usage though.
+    * Seems to work for now....
     */
 }
 
@@ -26,7 +26,6 @@
     height: 1080px;
     margin: 0 auto;
     scale: 1.0;
-    /* background-color: #171414; */
 }
 
 .gallery img.preload {

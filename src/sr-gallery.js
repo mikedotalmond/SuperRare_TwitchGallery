@@ -291,7 +291,7 @@ const srGallery = {
                 // to try to prevent GC stuttering when scaling up from smaller scales to 1:1 
                 gsap.set(imageElementNoGC, {
                     "background-image": `url(${preloadImg.src})`,
-                    'background-position-x': '50%',
+                    'background-position': '50% 0px',
                     visibility: 'visible',
                     scale: currentAsset.dimensions.endScale,
                 });
@@ -361,13 +361,13 @@ const srGallery = {
                     gsap.set(videoContainer, { scale: 1.0 });
                     gsap.to(videoContainer, {
                         scale: endScale >= 2.0 ? endScale : 1.0, delay: delay,
-                        duration: config.duration.total * 0.9 - delay,
+                        duration: config.duration.total * 0.95 - delay,
                         ease: 'power3.inOut'
                     });
                 } else {
                     const aspect = currentAsset.dimensions.aspect;
                     const xPct = 50 + 25 * (Math.random() - 0.5) * aspect;
-                    const yPct = (Math.random() - .5) * .05 * currentAsset.dimensions.height * (1.0 / aspect);
+                    const yPct = (Math.random() - .5) * .1 * currentAsset.dimensions.height * (1.0 / aspect);
                     const bgPosition = (endScale > 2.0 ? xPct + '%' : '50%') + ' ' + (endScale > 2.0 ? yPct + 'px' : '0.0px');
                     log(xPct, yPct);
                     gsap.set(imageElement, {
@@ -381,7 +381,7 @@ const srGallery = {
                     });
                     gsap.to(imageElement, {
                         scale: endScale, delay: delay,
-                        duration: config.duration.total * 0.9 - delay,
+                        duration: config.duration.total * 0.95 - delay,
                         'background-position': bgPosition,
                         ease: 'power3.inOut'
                     });
