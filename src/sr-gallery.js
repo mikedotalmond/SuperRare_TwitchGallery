@@ -9,9 +9,9 @@ const srGallery = {
         duration: { total: 40, title: 30, subtitle: 29.9, description: 15 },
         ignoredAssets: [
             /** Ignoring various assets, by their API position */
-            9, 12, 13, 15, 16, 25, 32, 35, 39, 40, 105, 112,
-            134, 140, 141,
-            142, 143, 144, /*177,polar*/
+            9, 12, 13, 15, 16, 21, 25, 32, 35, 39, 40, 71, 105, 110, 112,
+            134, 138,
+            140, 141, 142, 143, 144, /*177,polar*/
             112, 150, 160, 161, 163, 164,
         ],
     }
@@ -38,13 +38,18 @@ const srGallery = {
     const
 
         init = async () => {
-            imageElement = document.getElementById("srgallery_image");
             container = document.getElementById("sr-gallery");
-            preloadImg = document.getElementById("image-preload");
+
             overlay = document.getElementById("gallery-overlay");
             loadSpinner = document.getElementById("loadSpinner");
+
+            preloadImg = document.getElementById("image-preload");
+            imageElement = document.getElementById("srgallery_image");
+            imageElementNoGC = document.getElementById("srgallery_image_prevent-gc");
+
             videoElement = document.getElementById("sr-gallery-video");
             videoContainer = document.getElementById("video-container");
+
             progressBar = document.getElementById("progressBox");
 
             hide();
@@ -56,6 +61,8 @@ const srGallery = {
 
             for (let i = 0; i < config.totalUserArtworks; i++) assetOrder[i] = i;
             resetAssetOrder();
+
+            window.addEventListener("keydown", handleKey);
 
             next();
         },
@@ -218,7 +225,7 @@ const srGallery = {
 
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
             gsap.to(videoContainer, { autoAlpha: 1, delay: 0.3, scale: 1.0, duration: 0 });
-            gsap.to(imageElement, { autoAlpha: 0, scale: 1.0, delay: 0.3, duration: 0, onComplete: () => onAssetShown() });
+            gsap.to(imageElement, { autoAlpha: 0, scale: 1.0, delay: 0.3, duration: 0, onComplete: () => onAssetReady() });
         },
 
 
@@ -242,7 +249,8 @@ const srGallery = {
                     ? Math.max(Math.max(w / screenW, h / screenH), Math.max(screenW / w, screenH / h)) // allow upscale on videos
                     : Math.max(w / screenW, h / screenH);
 
-                dimensions.endScale = scale;
+                const maxScale = 4.0;
+                dimensions.endScale = Math.min(scale, maxScale);
             }
 
             log("dimensions:", dimensions);
@@ -281,16 +289,17 @@ const srGallery = {
                 // Big image? Add it to the prevent-gc div and set size to endScale.
                 // This is to (try to) ensure the whole thing is kept in memory
                 // to try to prevent GC stuttering when scaling up from smaller scales to 1:1 
-                gsap.set("#srgallery_image_prevent-gc", {
+                gsap.set(imageElementNoGC, {
                     "background-image": `url(${preloadImg.src})`,
                     'background-position-x': '50%',
+                    visibility: 'visible',
                     scale: currentAsset.dimensions.endScale,
                 });
             } else {
-                gsap.set("#srgallery_image_prevent-gc", { "background-image": null, scale: 1.0 });
+                gsap.set(imageElementNoGC, { "background-image": null, scale: 1.0, visibility: 'hidden' });
             }
 
-            gsap.to(imageElement, { delay: 2, duration: 0, autoAlpha: 1, ease: 'power4.In', onComplete: onAssetShown });
+            gsap.to(imageElement, { delay: 2, duration: 0, autoAlpha: 1, onComplete: onAssetReady });
 
             gsap.set(progressBar, { width: "0.1%", autoAlpha: 0 });
             // image was loaded, so empty the 'preload' image
@@ -302,7 +311,7 @@ const srGallery = {
          * asset is ready and being shown -
            show text informations and set a timer for the next change
          */
-        onAssetShown = () => {
+        onAssetReady = () => {
             log("onAssetShown");
 
             gsap.killTweensOf(overlay);
@@ -314,6 +323,7 @@ const srGallery = {
 
             if (currentAsset.isVideo) {
                 gsap.set(imageElement, { autoAlpha: 0 });
+                gsap.set(imageElementNoGC, { "background-image": null, scale: 1.0, visibility: 'hidden' });
             } else {
                 videoElement.src = "";
                 gsap.set(imageElement, { autoAlpha: 1 });
@@ -344,29 +354,51 @@ const srGallery = {
             gsap.to(progressBar, { autoAlpha: 1, delay: delay, duration: 0.7 });
 
             const endScale = currentAsset.dimensions.endScale;
+            const animateVideoScale = true; // needed? config?
             //
             if (endScale != 1.0) {
-                if (currentAsset.isVideo) {
+                if (currentAsset.isVideo && animateVideoScale) {
                     gsap.set(videoContainer, { scale: 1.0 });
                     gsap.to(videoContainer, {
-                        scale: endScale, delay: delay,
-                        duration: config.duration.total * 0.8 - delay,
-                        ease: 'power4.inOut'
+                        scale: endScale >= 2.0 ? endScale : 1.0, delay: delay,
+                        duration: config.duration.total * 0.9 - delay,
+                        ease: 'power3.inOut'
                     });
                 } else {
-                    const xPct = 50 + 25 * (Math.random() * .5);
-                    gsap.set(imageElement, { 'image-rendering': 'auto' });
+                    const aspect = currentAsset.dimensions.aspect;
+                    const xPct = 50 + 25 * (Math.random() - 0.5) * aspect;
+                    const yPct = (Math.random() - .5) * .05 * currentAsset.dimensions.height * (1.0 / aspect);
+                    const bgPosition = (endScale > 2.0 ? xPct + '%' : '50%') + ' ' + (endScale > 2.0 ? yPct + 'px' : '0.0px');
+                    log(xPct, yPct);
+                    gsap.set(imageElement, {
+                        'image-rendering': 'auto',
+                        'background-position': '50% 0.0px',
+                    });
+                    // update the position of the gc workaround
+                    gsap.set(imageElementNoGC, {
+                        'image-rendering': 'auto',
+                        'background-position': bgPosition,
+                    });
                     gsap.to(imageElement, {
                         scale: endScale, delay: delay,
-                        duration: config.duration.total * 0.8 - delay,
-                        'background-position-x': endScale > 2.0 ? xPct + '%' : '50%',
-                        ease: 'power4.inOut'
+                        duration: config.duration.total * 0.9 - delay,
+                        'background-position': bgPosition,
+                        ease: 'power3.inOut'
                     });
                 }
             } else {
                 if (!currentAsset.isVideo) {
                     // use nearest neighbour for images at or below the screen size
-                    gsap.set(imageElement, { 'image-rendering': 'pixelated' });
+                    gsap.set(imageElement, {
+                        'image-rendering': 'pixelated',
+                        'background-position': '50% 0.0px',
+                        scale: 1
+                    });
+                    gsap.set(imageElementNoGC, {
+                        'image-rendering': 'pixelated',
+                        'background-position': '50% 0.0px',
+                        scale: 1
+                    });
                 }
             }
 
@@ -413,6 +445,24 @@ const srGallery = {
             assetIndex = { current: 0, next: 0 };
             nextAssetIndex();
             assetIndex.current = assetIndex.next;
+        },
+
+        // useful for testing
+        handleKey = (keyEvent) => {
+            switch (keyEvent.keyCode) {
+                case 39: // rightarrow 
+                    next();
+                    break;
+                case 37: // leftarrow
+                    prev();
+                    break;
+                case 32: // space
+                    if (gsap.globalTimeline.paused()) {
+                        gsap.globalTimeline.resume();
+                    } else {
+                        gsap.globalTimeline.pause();
+                    }
+            }
         };
 
 
