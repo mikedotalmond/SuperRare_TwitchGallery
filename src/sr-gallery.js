@@ -12,7 +12,7 @@ const srGallery = {
             9, 12, 13, 15, 16, 21, 25, 32, 35, 39, 40, 71, 105, 110, 112,
             134, 138,
             140, 141, 142, 143, 144, /*177,polar*/
-            112, 150, 160, 161, 163, 164,
+            112, 146, 150, 160, 161, 163, 164,
         ],
     }
 };
@@ -122,13 +122,19 @@ const srGallery = {
         showIdleOverlay = (duration) => {
             killSceneTweens();
             gsap.killTweensOf(loadSpinner);
-            gsap.set(loadSpinner, { rotation: 0 });
+
+            gsap.set(loadSpinner, { autoAlpha: 0, rotation: 0, top: 'calc(50% - 58px)' });
             gsap.to(loadSpinner, { rotation: 360, duration: 1, repeat: -1, ease: 'none' });
+            gsap.to(loadSpinner, { duration: duration, ease: 'expo.In', autoAlpha: 1 });
+
             gsap.to(overlay, { top: 0, height: '100%', duration: duration, ease: 'expo.In' });
             gsap.to(progressBar, { width: "0.1%", autoAlpha: 0, duration: duration, });
             gsap.to(imageElement, { autoAlpha: 0, duration: duration, });
+            gsap.to("#gallery-overlay-title", { bottom: '142px', duration: duration, ease: 'expo.Out' });
             overlays.hide();
         },
+
+
 
         killSceneTweens = () => {
             gsap.killTweensOf(overlay);
@@ -296,7 +302,10 @@ const srGallery = {
                     scale: currentAsset.dimensions.endScale,
                 });
             } else {
-                gsap.set(imageElementNoGC, { "background-image": null, scale: 1.0, visibility: 'hidden' });
+                gsap.set(imageElementNoGC, {
+                    "background-image": null, scale: 1.0,
+                    'background-position': '50% 50%', visibility: 'hidden'
+                });
             }
 
             gsap.to(imageElement, { delay: 2, duration: 0, autoAlpha: 1, onComplete: onAssetReady });
@@ -319,8 +328,6 @@ const srGallery = {
             gsap.killTweensOf(videoContainer);
             gsap.killTweensOf(progressBar);
 
-            var delay = 0.75;
-
             if (currentAsset.isVideo) {
                 gsap.set(imageElement, { autoAlpha: 0 });
                 gsap.set(imageElementNoGC, { "background-image": null, scale: 1.0, visibility: 'hidden' });
@@ -329,24 +336,36 @@ const srGallery = {
                 gsap.set(imageElement, { autoAlpha: 1 });
             }
 
-            // animate the overlay up, out of th way
+
+            let delay = 1.5;
+
+            // animate the overlay up, out of the way
             gsap.to(overlay, {
-                top: 0, height: '123px', delay: delay, duration: 0.3, ease: 'expo.Out', onComplete: () => {
+                top: 0, height: '96px', delay: delay, duration: 0.3, ease: 'expo.Out', onComplete: () => {
                     if (currentAsset.isVideo) {
                         if (inOBS) videoElement.muted = false; // need to be running in an obs browser source (headless) to unmute without user interaction
                         videoElement.play();
                     }
                 }
             });
+            gsap.to("#gallery-overlay-title", {
+                bottom: '46px',/*103px*/
+                delay: delay, duration: 0.333, ease: 'expo.In',
+            });
+            gsap.to(loadSpinner, {
+                top: 'calc(50% - 8px)',
+                delay: delay, duration: 0.333, ease: 'expo.In',
+                autoAlpha: 0
+            });
 
-            delay += 1.2;
+            delay += 2.25;
 
             // continue to animate it up and off the top of the screen
             gsap.to(overlay, {
                 top: '-212px', height: '0px', duration: 0.3, delay: delay, ease: 'expo.Out',
                 onComplete: () => {
                     gsap.killTweensOf(loadSpinner);
-                    showAssetInfo(0.4);
+                    showAssetInfo(0.7);
                 },
             });
 
@@ -391,12 +410,12 @@ const srGallery = {
                     // use nearest neighbour for images at or below the screen size
                     gsap.set(imageElement, {
                         'image-rendering': 'pixelated',
-                        'background-position': '50% 0.0px',
+                        'background-position': '50% 50%',
                         scale: 1
                     });
                     gsap.set(imageElementNoGC, {
                         'image-rendering': 'pixelated',
-                        'background-position': '50% 0.0px',
+                        'background-position': '50% 50%',
                         scale: 1
                     });
                 }
@@ -423,9 +442,9 @@ const srGallery = {
         showAssetInfo = (delay) => {
             const asset = currentAsset;
             overlays.info.show(config.infoText, 0, delay, null);
-            overlays.title.show(asset.metadata.name, config.duration.title, delay);
-            overlays.subtitle.show(`${asset.metadata.createdBy}, ${asset.metadata.yearCreated}`, config.duration.subtitle, delay + 0.1, null);
-            if (!asset.isVideo) overlays.desc.show(asset.description, config.duration.description, delay + 0.2, null);
+            overlays.title.show(asset.metadata.name, config.duration.title, delay + 0.1);
+            overlays.subtitle.show(`${asset.metadata.createdBy}, ${asset.metadata.yearCreated}`, config.duration.subtitle, delay, null);
+            if (!asset.isVideo) overlays.desc.show(asset.description, config.duration.description, delay + 2.2, null);
 
             // send a chatbot message about the current artwork
             settings.actions['!art'].handle();
@@ -449,13 +468,16 @@ const srGallery = {
 
         // useful for testing
         handleKey = (keyEvent) => {
+            log(keyEvent.keyCode);
             switch (keyEvent.keyCode) {
+                case 38: // up
+                    show(); break;
+                case 40: // down
+                    hide(); break;
                 case 39: // rightarrow 
-                    next();
-                    break;
+                    next(); break;
                 case 37: // leftarrow
-                    prev();
-                    break;
+                    prev(); break;
                 case 32: // space
                     if (gsap.globalTimeline.paused()) {
                         gsap.globalTimeline.resume();
