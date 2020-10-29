@@ -1,1 +1,7 @@
 settings.js
+src/config.js
+/dist/main.js
+/dist/*.map
+/dist/main.js.LICENSE.txt
+/node_modules
+/package-lock.json

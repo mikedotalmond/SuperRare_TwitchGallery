@@ -44,7 +44,7 @@
     padding: 52px 52px 52px 52px;
     width: calc(100% - 104px);
     /* height: 123px; */
-    height: 1080px;
+    height: calc(100%);
 	top: 0px;
     overflow: clip;
     z-index: 1;

@@ -1,4 +1,4 @@
-settings.strings = {
+const strings = {
     // bot mod responses
     "bot_mod_all_caps": ["No shouting, please.", "There's no need to shout.", "Calm down."],
     "bot_mod_other": ["Do better."],
@@ -9,3 +9,5 @@ settings.strings = {
     
     "bot_!superrare": ["Mike is a digital artist on SuperRare, and this gallery takes a little look at his work. Find more here: superrare.co/mikedotalmond/creations"],
 };
+
+export default strings;
