@@ -34,9 +34,9 @@ class ChatClient {
         };
 
         this.client = new TwitchClient(opts)
-            .on('message', this.onMessage)
-            .on('connected', this.onConnect)
-            .on('disconnected', this.onDisconnect);
+            .on('message', (target, context, msg, self) => this.onMessage(target, context, msg, self))
+            .on('connected', (addr, port) => this.onConnect(addr, port))
+            .on('disconnected', reason => this.onDisconnect(reason));
 
         this.client.connect();
     }
@@ -83,7 +83,7 @@ class ChatClient {
 
     sayFromChannel(message) {
         if (!this.connected || this.disabled) return;
-        if (message != null && message.length > 0) client.say(channel, message);
+        if (message != null && message.length > 0) this.client.say(config.channel, message);
     }
 
     sayFromChannelPrefixed(prefix, message) {

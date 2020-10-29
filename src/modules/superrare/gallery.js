@@ -123,7 +123,6 @@ const
         gsap.to(imageElement, { autoAlpha: 0, duration: duration, });
         gsap.to(videoContainer, { autoAlpha: 0, duration: duration, });
 
-        log("videoElement", videoElement);
         videoElement.muted = true;
         videoElement.pause();
 
