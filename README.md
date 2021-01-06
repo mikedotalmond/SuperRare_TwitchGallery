@@ -7,6 +7,7 @@ Includes a simple bot to reply to commands in the chat.
 
 This is early and messy and prototype-y, so don't expect too much. More information will appear here eventually.
 
+---
 Example outputs:
 
 [Unattended Art](https://www.twitch.tv/videos/770139029) test stream.
